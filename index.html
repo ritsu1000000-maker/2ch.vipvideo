@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyVideoTube</title>
+    <title>MyVideoTube - Firebase版</title>
     <style>
-        /* 基本設定 */
+        /* --- CSSは前回と同じなので省略せずにそのまま入れます --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f9f9f9; color: #0f0f0f; }
-
-        /* ヘッダー */
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; position: fixed; top: 0; width: 100%; height: 60px; z-index: 100; border-bottom: 1px solid #e5e5e5; }
         .logo { font-size: 22px; font-weight: bold; color: #ff0000; cursor: pointer;}
         .search-bar { display: flex; flex: 1; max-width: 600px; margin: 0 40px; }
@@ -17,71 +15,50 @@
         .search-bar button { padding: 10px 20px; border: 1px solid #ccc; border-left: none; background: #f8f8f8; border-radius: 0 20px 20px 0; cursor: pointer; }
         .header-right { display: flex; align-items: center; gap: 15px; }
         .upload-btn { padding: 8px 16px; background-color: #f2f2f2; border: none; border-radius: 20px; font-weight: bold; font-size: 14px; cursor: pointer; }
-        .user-icon { width: 32px; height: 32px; background-color: #065fd4; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
-
-        /* レイアウト */
+        .user-icon { width: 32px; height: 32px; background-color: #065fd4; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .container { display: flex; margin-top: 60px; height: calc(100vh - 60px); }
         aside { width: 240px; background: white; padding: 15px 10px; overflow-y: auto; border-right: 1px solid #e5e5e5; }
         .nav-item { padding: 10px 15px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; font-size: 14px; }
-        .nav-item.active { background-color: #f2f2f2; font-weight: bold; }
-
-        /* メイン・動画グリッド */
+        .nav-item.active, .nav-item:hover { background-color: #f2f2f2; font-weight: bold; }
         main { flex: 1; padding: 24px; overflow-y: auto; }
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
-        /* 動的に生成される動画カード */
-        .video-card { display: flex; flex-direction: column; }
-        .video-player { width: 100%; aspect-ratio: 16/9; background-color: #000; border-radius: 12px; margin-bottom: 12px; object-fit: cover; outline: none; }
+        .video-card { cursor: pointer; display: flex; flex-direction: column; }
+        .thumbnail { width: 100%; aspect-ratio: 16/9; background-color: #ddd; border-radius: 12px; margin-bottom: 12px; }
         .video-info { display: flex; gap: 12px; }
-        .avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #065fd4; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; font-size: 14px;}
-        .details h3 { font-size: 16px; margin-bottom: 4px; color: #0f0f0f; word-break: break-all; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #ccc; flex-shrink: 0; }
+        .details h3 { font-size: 16px; margin-bottom: 4px; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .details p { font-size: 14px; color: #606060; margin-bottom: 2px; }
-        
-        /* 空の状態のメッセージ */
-        .empty-state { text-align: center; color: #606060; margin-top: 50px; grid-column: 1 / -1; }
 
-        /* モーダルUI */
+        /* モーダルのスタイル */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 200; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 500px; padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .modal-content h2 { font-size: 20px; border-bottom: 1px solid #e5e5e5; padding-bottom: 10px; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px; }
         .input-group { display: flex; flex-direction: column; gap: 6px; }
-        .input-group label { font-size: 14px; font-weight: bold; color: #333; }
-        .input-group input[type="text"], .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        .input-group textarea { resize: vertical; min-height: 80px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 14px;}
-        .btn-cancel { background: #f2f2f2; color: #0f0f0f; }
+        .input-group label { font-size: 14px; font-weight: bold; }
+        .input-group input[type="text"], .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #f2f2f2; }
         .btn-submit { background: #065fd4; color: white; }
-        .btn-submit:disabled { background: #a0c3ff; cursor: not-allowed; }
+        .share-area { display: none; margin-top: 10px; padding: 16px; background: #e6f4ea; border: 1px solid #ceead6; border-radius: 8px; }
+        .share-area input { width: 100%; padding: 8px; margin-top: 8px; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo">▶︎ MyVideoTube</div>
-        <div class="search-bar">
-            <input type="text" placeholder="検索">
-            <button>検索</button>
-        </div>
-        <div class="header-right">
-            <button class="upload-btn" id="openUploadBtn">＋ アップロード</button>
-            <div class="user-icon">U</div>
-        </div>
+        <div class="search-bar"><input type="text" placeholder="検索"><button>検索</button></div>
+        <div class="header-right"><button class="upload-btn" id="openUploadBtn">＋ アップロード</button><div class="user-icon">U</div></div>
     </header>
 
     <div class="container">
         <aside>
             <div class="nav-item active">ホーム</div>
-            <div class="nav-item">自分の動画</div>
+            <div class="nav-item">ショート</div>
         </aside>
-
         <main>
-            <div class="video-grid" id="videoGrid">
-                <div class="empty-state" id="emptyState">
-                    <h2>動画がありません</h2>
-                    <p>右上のボタンから動画をアップロードしてください。</p>
-                </div>
-            </div>
+            <h2>アップロードされた動画はここに表示予定</h2>
+            <div class="video-grid" id="videoGrid"></div>
         </main>
     </div>
 
@@ -89,45 +66,76 @@
         <div class="modal-content">
             <h2>動画のアップロード</h2>
             <div class="input-group">
-                <label for="videoFile">動画ファイル</label>
-                <input type="file" id="videoFile" accept="video/mp4,video/x-m4v,video/*">
+                <label>動画ファイルを選択</label>
+                <input type="file" id="videoFile" accept="video/*">
             </div>
             <div class="input-group">
-                <label for="videoTitle">タイトル (必須)</label>
+                <label>タイトル (必須)</label>
                 <input type="text" id="videoTitle" placeholder="タイトルを入力">
             </div>
             <div class="input-group">
-                <label for="videoDesc">説明</label>
+                <label>説明</label>
                 <textarea id="videoDesc" placeholder="説明を入力"></textarea>
             </div>
+            
+            <div id="progressText" style="color: #065fd4; font-weight: bold; display: none;">アップロード準備中...</div>
+            <div class="share-area" id="shareArea">
+                <p>✅ アップロード完了！共有リンク:</p>
+                <input type="text" id="shareUrl" readonly>
+            </div>
+
             <div class="modal-actions">
-                <button class="btn btn-cancel" id="closeModalBtn">キャンセル</button>
-                <button class="btn btn-submit" id="submitVideoBtn">アップロード</button>
+                <button class="btn btn-cancel" id="closeModalBtn">閉じる</button>
+                <button class="btn btn-submit" id="submitVideoBtn">アップロード開始</button>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // 提供いただいたFirebase SDKの読み込み
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
+        
+        // 追加: Storage (動画保存用) と Firestore (データ保存用) をインポート
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBCQArL0Q1wDveRywCpet5Nor3PuRYt7fM",
+            authDomain: "sabopennet.firebaseapp.com",
+            projectId: "sabopennet",
+            storageBucket: "sabopennet.firebasestorage.app",
+            messagingSenderId: "284308308452",
+            appId: "1:284308308452:web:e36dd991e55a0e60e4c7f1",
+            measurementId: "G-K17XRK5KRN"
+        };
+
+        // Firebaseの初期化
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+
+        // UI要素の取得
         const openBtn = document.getElementById('openUploadBtn');
         const closeBtn = document.getElementById('closeModalBtn');
         const submitBtn = document.getElementById('submitVideoBtn');
         const modal = document.getElementById('uploadModal');
+        const shareArea = document.getElementById('shareArea');
+        const shareUrlInput = document.getElementById('shareUrl');
+        const progressText = document.getElementById('progressText');
         
-        const fileInput = document.getElementById('videoFile');
         const titleInput = document.getElementById('videoTitle');
         const descInput = document.getElementById('videoDesc');
-        
-        const videoGrid = document.getElementById('videoGrid');
-        const emptyState = document.getElementById('emptyState');
+        const fileInput = document.getElementById('videoFile');
 
         // モーダルを開く
         openBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
-            fileInput.value = '';
-            titleInput.value = '';
-            descInput.value = '';
+            shareArea.style.display = 'none';
+            progressText.style.display = 'none';
+            titleInput.value = ''; descInput.value = ''; fileInput.value = '';
             submitBtn.disabled = false;
-            submitBtn.textContent = 'アップロード';
         });
 
         // モーダルを閉じる
@@ -135,69 +143,63 @@
             modal.style.display = 'none';
         });
 
-        // ファイル選択時にファイル名をタイトル欄に自動入力する（利便性向上）
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                // 拡張子を除いたファイル名をタイトルにセット
-                const fileName = e.target.files[0].name.replace(/\.[^/.]+$/, "");
-                if (titleInput.value.trim() === '') {
-                    titleInput.value = fileName;
-                }
-            }
-        });
-
-        // アップロード処理（ローカルでの動的レンダリング）
-        submitBtn.addEventListener('click', () => {
+        // アップロード処理
+        submitBtn.addEventListener('click', async () => {
             const file = fileInput.files[0];
             const title = titleInput.value.trim();
+            const desc = descInput.value.trim();
 
-            if (!file) {
-                alert('動画ファイルを選択してください。');
-                return;
-            }
-            if (title === '') {
-                alert('タイトルを入力してください。');
-                return;
-            }
+            if (!file) return alert('動画ファイルを選択してください。');
+            if (!title) return alert('タイトルを入力してください。');
 
             submitBtn.disabled = true;
-            submitBtn.textContent = '処理中...';
+            progressText.style.display = 'block';
 
-            // 擬似的な通信遅延の後に描画
-            setTimeout(() => {
-                // File APIを使用してローカルの動画ファイルのURLを生成
-                const videoUrl = URL.createObjectURL(file);
+            try {
+                // 1. Firebase Storageに動画をアップロード
+                // ファイル名が被らないようにタイムスタンプをつける
+                const fileName = `${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, 'videos/' + fileName);
+                const uploadTask = uploadBytesResumable(storageRef, file);
 
-                // 空状態のメッセージを非表示にする
-                if (emptyState) {
-                    emptyState.style.display = 'none';
-                }
+                // アップロードの進捗状況を監視
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressText.textContent = `アップロード中... ${Math.floor(progress)}%`;
+                    }, 
+                    (error) => {
+                        console.error("Upload failed:", error);
+                        progressText.textContent = 'エラーが発生しました。';
+                        submitBtn.disabled = false;
+                    }, 
+                    async () => {
+                        // 2. アップロード完了後、ダウンロードURLを取得
+                        progressText.textContent = '動画の保存完了！データを記録中...';
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-                // 新しい動画カードのHTML要素を生成
-                const videoCardHTML = `
-                    <div class="video-card">
-                        <video src="${videoUrl}" class="video-player" controls preload="metadata"></video>
-                        <div class="video-info">
-                            <div class="avatar">U</div>
-                            <div class="details">
-                                <h3>${escapeHTML(title)}</h3>
-                                <p>あなた</p>
-                                <p>0回視聴 • たった今</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                        // 3. Firestore（データベース）に動画の情報を保存
+                        const docRef = await addDoc(collection(db, "videos"), {
+                            title: title,
+                            description: desc,
+                            videoUrl: downloadURL,
+                            fileName: file.name,
+                            createdAt: serverTimestamp()
+                        });
 
-                // グリッドの先頭に動画を追加
-                videoGrid.insertAdjacentHTML('afterbegin', videoCardHTML);
-
-                // モーダルを閉じる
-                modal.style.display = 'none';
-            }, 800);
+                        // 4. 完了画面と共有URLの表示
+                        progressText.style.display = 'none';
+                        shareArea.style.display = 'block';
+                        shareUrlInput.value = downloadURL; // 実際の動画の直リンクを表示
+                        shareUrlInput.select();
+                    }
+                );
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("エラーが発生しました。コンソールを確認してください。");
+                submitBtn.disabled = false;
+            }
         });
-
-        // XSS対策用の簡単なエスケープ関数
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
+    </script>
+</body>
+</html>
