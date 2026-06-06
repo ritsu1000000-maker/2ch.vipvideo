@@ -3,287 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyVideoTube</title>
+    <title>簡易動画共有アプリ</title>
     <style>
-        /* 全体のリセットと基本設定 */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f9f9f9; color: #0f0f0f; }
-
-        /* 上部ヘッダー */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; position: fixed; top: 0; width: 100%; height: 60px; z-index: 100; border-bottom: 1px solid #e5e5e5; }
-        .logo { font-size: 22px; font-weight: bold; color: #ff0000; cursor: pointer; text-decoration: none;}
-        
-        /* 検索バー */
-        .search-bar { display: flex; flex: 1; max-width: 600px; margin: 0 40px; }
-        .search-bar input { width: 100%; padding: 10px 16px; border: 1px solid #ccc; border-radius: 20px 0 0 20px; outline: none; font-size: 16px; }
-        .search-bar button { padding: 10px 20px; border: 1px solid #ccc; border-left: none; background: #f8f8f8; border-radius: 0 20px 20px 0; cursor: pointer; }
-        .search-bar button:hover { background: #f0f0f0; }
-
-        /* アップロード＆ユーザーアイコン */
-        .header-right { display: flex; align-items: center; gap: 15px; }
-        .upload-btn { padding: 8px 16px; background-color: #f2f2f2; border: none; border-radius: 20px; font-weight: bold; font-size: 14px; cursor: pointer; }
-        .upload-btn:hover { background-color: #e5e5e5; }
-        .user-icon { width: 32px; height: 32px; background-color: #065fd4; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
-
-        /* メインレイアウト */
-        .container { display: flex; margin-top: 60px; height: calc(100vh - 60px); }
-
-        /* 左側サイドバー */
-        aside { width: 240px; background: white; padding: 15px 10px; overflow-y: auto; border-right: 1px solid #e5e5e5; }
-        .nav-item { padding: 10px 15px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; font-size: 14px; color: #0f0f0f; text-decoration: none; display: block;}
-        .nav-item:hover { background-color: #f2f2f2; }
-        .nav-item.active { background-color: #f2f2f2; font-weight: bold; }
-
-        /* 右側メインエリア */
-        main { flex: 1; padding: 24px; overflow-y: auto; }
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
-        /* モーダルのスタイル */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 200; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 500px; padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .modal-content h2 { font-size: 20px; border-bottom: 1px solid #e5e5e5; padding-bottom: 10px; margin-bottom: 5px; }
-        .input-group { display: flex; flex-direction: column; gap: 6px; }
-        .input-group label { font-size: 14px; font-weight: bold; color: #333; }
-        .input-group input[type="text"], .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
-        .input-group textarea { resize: vertical; min-height: 80px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 14px;}
-        .btn-cancel { background: #f2f2f2; color: #0f0f0f; }
-        .btn-cancel:hover { background: #e5e5e5; }
-        .btn-submit { background: #065fd4; color: white; }
-        .btn-submit:hover { background: #0056bf; }
-        .btn-submit:disabled { background: #cccccc; cursor: not-allowed; }
-
-        /* 共有リンク表示エリア */
-        .share-area { display: none; margin-top: 10px; padding: 16px; background: #e6f4ea; border: 1px solid #ceead6; border-radius: 8px; }
-        .share-area p { color: #137333; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
-        .share-area input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white; }
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .upload-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        .video-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        video {
+            width: 100%;
+            border-radius: 4px;
+            background-color: #000;
+        }
+        .video-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0 5px 0;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <a href="/" class="logo">▶︎ MyVideoTube</a>
-        <div class="search-bar">
-            <input type="text" placeholder="検索">
-            <button>検索</button>
-        </div>
-        <div class="header-right">
-            <button class="upload-btn" id="openUploadBtn">＋ アップロード</button>
-            <div class="user-icon">U</div>
-        </div>
-    </header>
-
     <div class="container">
-        <aside>
-            <a href="/" class="nav-item active">ホーム</a>
-            <div class="nav-item">ショート</div>
-            <div class="nav-item">登録チャンネル</div>
-            <hr style="margin: 10px 0; border: 0; border-top: 1px solid #e5e5e5;">
-            <div class="nav-item">ライブラリ</div>
-        </aside>
+        <h1>マイ動画アプリ</h1>
 
-        <main id="mainContent">
-            <h2>動画一覧（現在はダミーです）</h2>
-            <div class="video-grid">
-                <p style="grid-column: 1 / -1; color: #666; margin-top: 10px;">
-                    ※ Firebaseから全動画を取得して一覧表示する機能は今後追加可能です。まずは右上の「アップロード」から動画を追加して共有リンクを発行してみてください。
-                </p>
-            </div>
-        </main>
-    </div>
-
-    <div class="modal-overlay" id="uploadModal">
-        <div class="modal-content">
-            <h2>動画のアップロード</h2>
-            
-            <div class="input-group">
-                <label for="videoFile">動画ファイルを選択</label>
-                <input type="file" id="videoFile" accept="video/*">
-            </div>
-
-            <div class="input-group">
-                <label for="videoTitle">タイトル (必須)</label>
-                <input type="text" id="videoTitle" placeholder="動画のタイトルを追加する">
-            </div>
-
-            <div class="input-group">
-                <label for="videoDesc">説明</label>
-                <textarea id="videoDesc" placeholder="視聴者に動画について説明する"></textarea>
-            </div>
-
-            <div id="progressText" style="color: #065fd4; font-weight: bold; display: none; font-size: 14px;">アップロード準備中...</div>
-            
-            <div class="share-area" id="shareArea">
-                <p>✅ アップロードが完了しました！</p>
-                <input type="text" id="shareUrl" readonly>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn btn-cancel" id="closeModalBtn">キャンセル</button>
-                <button class="btn btn-submit" id="submitVideoBtn">アップロード開始</button>
-            </div>
+        <div class="upload-section">
+            <input type="text" id="video-title" placeholder="動画のタイトルを入力">
+            <input type="file" id="video-file" accept="video/mp4,video/x-m4v,video/*">
+            <button onclick="postVideo()">投稿する</button>
         </div>
+
+        <div id="video-feed">
+            </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
-        import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
-
-        // Firebaseの設定情報
-        const firebaseConfig = {
-            apiKey: "AIzaSyBCQArL0Q1wDveRywCpet5Nor3PuRYt7fM",
-            authDomain: "sabopennet.firebaseapp.com",
-            projectId: "sabopennet",
-            storageBucket: "sabopennet.firebasestorage.app",
-            messagingSenderId: "284308308452",
-            appId: "1:284308308452:web:e36dd991e55a0e60e4c7f1",
-            measurementId: "G-K17XRK5KRN"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
-        const db = getFirestore(app);
-
-        // DOM要素の取得
-        const openBtn = document.getElementById('openUploadBtn');
-        const closeBtn = document.getElementById('closeModalBtn');
-        const submitBtn = document.getElementById('submitVideoBtn');
-        const modal = document.getElementById('uploadModal');
-        const shareArea = document.getElementById('shareArea');
-        const shareUrlInput = document.getElementById('shareUrl');
-        const progressText = document.getElementById('progressText');
-        const mainContent = document.getElementById('mainContent');
-        
-        const titleInput = document.getElementById('videoTitle');
-        const descInput = document.getElementById('videoDesc');
-        const fileInput = document.getElementById('videoFile');
-
-        // YouTube風のランダムな動画ID（11桁）を生成する関数
-        function generateVideoId() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-            let result = '';
-            for (let i = 0; i < 11; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        // ページ読み込み時にURLをチェックし、動画再生画面に切り替える処理
-        window.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const videoId = urlParams.get('v');
-
-            if (videoId) {
-                mainContent.innerHTML = '<p style="font-size: 18px; font-weight: bold;">動画を読み込み中...</p>';
-
-                try {
-                    const docRef = doc(db, "videos", videoId);
-                    const docSnap = await getDoc(docRef);
-
-                    if (docSnap.exists()) {
-                        const videoData = docSnap.data();
-                        
-                        // 動画プレイヤーと詳細のUIを生成
-                        mainContent.innerHTML = `
-                            <div style="max-width: 800px; margin: 0 auto; padding-bottom: 40px;">
-                                <video src="${videoData.videoUrl}" controls autoplay style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; outline: none;"></video>
-                                <h2 style="margin-top: 20px; font-size: 22px; color: #0f0f0f;">${videoData.title}</h2>
-                                <p style="color: #606060; font-size: 14px; margin-top: 5px;">アップロード日: ${videoData.createdAt ? videoData.createdAt.toDate().toLocaleDateString() : '不明'}</p>
-                                <div style="margin-top: 15px; background: #f2f2f2; padding: 15px; border-radius: 12px;">
-                                    <p style="color: #0f0f0f; white-space: pre-wrap; line-height: 1.5; font-size: 14px;">${videoData.description}</p>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        mainContent.innerHTML = '<h2 style="color: red;">指定された動画は見つかりませんでした。</h2><p style="margin-top:10px;">URLが間違っているか、動画が削除された可能性があります。</p>';
-                    }
-                } catch (error) {
-                    console.error("動画の取得に失敗しました:", error);
-                    mainContent.innerHTML = '<h2>エラーが発生しました。</h2>';
-                }
-            }
-        });
-
-        // モーダルを開く
-        openBtn.addEventListener('click', () => {
-            modal.style.display = 'flex';
-            shareArea.style.display = 'none';
-            progressText.style.display = 'none';
-            titleInput.value = ''; descInput.value = ''; fileInput.value = '';
-            submitBtn.textContent = 'アップロード開始';
-            submitBtn.disabled = false;
-        });
-
-        // モーダルを閉じる
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-
-        // アップロード処理とデータ保存
-        submitBtn.addEventListener('click', async () => {
+    <script>
+        function postVideo() {
+            // 1. 入力されたタイトルとファイルを取得
+            const titleInput = document.getElementById('video-title');
+            const fileInput = document.getElementById('video-file');
             const file = fileInput.files[0];
-            const title = titleInput.value.trim();
-            const desc = descInput.value.trim();
 
-            if (!file) return alert('動画ファイルを選択してください。');
-            if (!title) return alert('タイトルを入力してください。');
-
-            submitBtn.disabled = true;
-            progressText.style.display = 'block';
-            progressText.textContent = 'アップロード準備中...';
-
-            try {
-                const videoId = generateVideoId(); // 新しい動画IDを発行
-                const fileName = `${videoId}_${file.name}`;
-                const storageRef = ref(storage, 'videos/' + fileName);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        progressText.textContent = `アップロード中... ${Math.floor(progress)}%`;
-                    }, 
-                    (error) => {
-                        console.error("Upload failed:", error);
-                        progressText.textContent = 'エラーが発生しました。';
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'やり直す';
-                    }, 
-                    async () => {
-                        progressText.textContent = '動画の保存完了！データを記録中...';
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-
-                        // FirestoreにドキュメントID＝動画IDでデータを保存
-                        await setDoc(doc(db, "videos", videoId), {
-                            title: title,
-                            description: desc,
-                            videoUrl: downloadURL,
-                            createdAt: serverTimestamp()
-                        });
-
-                        // 共有用URLの生成 (現在のURLに ?v=動画ID を付与)
-                        const baseUrl = window.location.origin + window.location.pathname;
-                        const params = new URLSearchParams();
-                        params.append('v', videoId);
-                        const shareableUrl = `${baseUrl}?${params.toString()}`;
-
-                        // 完了画面の表示
-                        progressText.style.display = 'none';
-                        shareArea.style.display = 'block';
-                        shareUrlInput.value = shareableUrl;
-                        shareUrlInput.select();
-                        submitBtn.textContent = '完了';
-                    }
-                );
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                alert("エラーが発生しました。コンソールを確認してください。");
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'やり直す';
+            // 2. 入力チェック（ファイルがない場合は警告）
+            if (!file) {
+                alert('動画ファイルを選択してください！');
+                return;
             }
-        });
+
+            // タイトルが空の場合は「無題」にする
+            const titleText = titleInput.value.trim() || '無題';
+
+            // 3. ブラウザ内で動画を再生するための仮のURLを作成
+            const videoURL = URL.createObjectURL(file);
+
+            // 4. 新しい動画カードのHTMLを作成
+            const videoFeed = document.getElementById('video-feed');
+            const videoCard = document.createElement('div');
+            videoCard.className = 'video-card';
+            
+            // HTMLを組み立てて挿入
+            videoCard.innerHTML = `
+                <video src="${videoURL}" controls></video>
+                <div class="video-title">${titleText}</div>
+            `;
+
+            // 5. 画面の先頭に動画を追加
+            videoFeed.prepend(videoCard);
+
+            // 6. 入力欄をリセット
+            titleInput.value = '';
+            fileInput.value = '';
+        }
     </script>
+
 </body>
 </html>
