@@ -17,12 +17,12 @@
         video { width: 100%; border-radius: 4px; background-color: #000; }
         .video-title { font-size: 18px; font-weight: bold; margin: 10px 0 5px 0; }
         
-        /* 共有ボタンなどの追加スタイル */
         .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
         .copy-btn { background-color: #28a745; font-size: 14px; padding: 6px 12px; }
         .copy-btn:hover { background-color: #218838; }
         
-        #loading { display: none; color: #d9534f; font-weight: bold; margin-bottom: 10px; }
+        /* ローディングの文字色を青にして目立たせました */
+        #loading { display: none; color: #0056b3; font-weight: bold; margin-bottom: 10px; }
         #back-btn { display: none; background-color: #6c757d; margin-bottom: 20px; width: 100%; }
     </style>
 </head>
@@ -34,19 +34,19 @@
         <button id="back-btn" onclick="window.location.href=window.location.pathname">← 動画一覧に戻る</button>
 
         <div class="upload-section" id="upload-section">
-            <div id="loading">動画をアップロード中です...（画面を閉じないでください）</div>
+            <div id="loading">準備中...</div>
             <input type="text" id="video-title" placeholder="動画のタイトルを入力">
             <input type="file" id="video-file" accept="video/mp4,video/x-m4v,video/*">
             <button id="post-btn">投稿する</button>
         </div>
 
-        <div id="video-feed">
-            </div>
+        <div id="video-feed"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
+        // ★ uploadBytesResumable に変更して進捗を取れるようにしました
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -69,39 +69,29 @@
         const uploadSection = document.getElementById('upload-section');
         const backBtn = document.getElementById('back-btn');
 
-        // URLのパラメータ（?v=〇〇）を取得してモードを判定
         const urlParams = new URLSearchParams(window.location.search);
         const viewVideoId = urlParams.get('v');
 
         let dbQuery;
-
         if (viewVideoId) {
-            // ▼ 個別動画表示モード（URLに ?v= がついている場合）
-            uploadSection.style.display = 'none'; // アップロード欄を隠す
-            backBtn.style.display = 'block';      // 戻るボタンを表示
-            
-            // 指定されたvideoIdの動画だけを検索
+            uploadSection.style.display = 'none';
+            backBtn.style.display = 'block';
             dbQuery = query(collection(db, "videos"), where("videoId", "==", viewVideoId));
         } else {
-            // ▼ 通常のタイムライン表示モード
             dbQuery = query(collection(db, "videos"), orderBy("createdAt", "desc"));
         }
 
-        // --- 1. データベースから動画を読み込んで表示 ---
+        // 動画一覧の読み込み
         onSnapshot(dbQuery, (snapshot) => {
             videoFeed.innerHTML = '';
-            
             if (snapshot.empty && viewVideoId) {
                 videoFeed.innerHTML = '<p>指定された動画は見つかりませんでした。</p>';
                 return;
             }
-
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const videoCard = document.createElement('div');
                 videoCard.className = 'video-card';
-                
-                // 共有用のURLを組み立てる (現在のURLの末尾に ?v=ランダムID を付ける)
                 const shareUrl = window.location.origin + window.location.pathname + '?v=' + data.videoId;
 
                 videoCard.innerHTML = `
@@ -112,25 +102,21 @@
                     </div>
                 `;
 
-                // コピーボタンの機能を追加
                 const copyBtn = videoCard.querySelector('.copy-btn');
                 copyBtn.addEventListener('click', (e) => {
                     const urlToCopy = e.target.getAttribute('data-url');
                     navigator.clipboard.writeText(urlToCopy).then(() => {
                         e.target.textContent = 'コピー完了!';
                         setTimeout(() => e.target.textContent = 'URLコピー', 2000);
-                    }).catch(err => {
-                        alert('コピーに失敗しました');
-                    });
+                    }).catch(err => alert('コピーに失敗しました'));
                 });
-
                 videoFeed.appendChild(videoCard);
             });
         });
 
-        // --- 2. 動画をアップロード ---
+        // 動画のアップロード処理
         if(postBtn) {
-            postBtn.addEventListener('click', async () => {
+            postBtn.addEventListener('click', () => {
                 const titleInput = document.getElementById('video-title');
                 const fileInput = document.getElementById('video-file');
                 const file = fileInput.files[0];
@@ -141,36 +127,59 @@
                 }
 
                 const titleText = titleInput.value.trim() || '無題';
-                
-                // ランダムなURL用のIDを生成 (例: "a7b3c9xyz")
                 const randomVideoId = Math.random().toString(36).substring(2, 11);
 
+                // アップロード開始のUI設定
                 loadingMsg.style.display = 'block';
+                loadingMsg.innerText = '準備中...';
                 postBtn.disabled = true;
 
-                try {
-                    const storageRef = ref(storage, 'videos/' + Date.now() + '_' + file.name);
-                    await uploadBytes(storageRef, file);
-                    const downloadURL = await getDownloadURL(storageRef);
+                const storageRef = ref(storage, 'videos/' + Date.now() + '_' + file.name);
+                
+                // ★ uploadBytesResumableを使って進捗を監視する
+                const uploadTask = uploadBytesResumable(storageRef, file);
 
-                    // データベースにランダムID(videoId)も一緒に保存する
-                    await addDoc(collection(db, "videos"), {
-                        title: titleText,
-                        url: downloadURL,
-                        videoId: randomVideoId, // ★ここでランダムIDを保存
-                        createdAt: serverTimestamp()
-                    });
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        // 進捗（％）を計算して画面に表示
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        loadingMsg.innerText = `アップロード中... ${Math.round(progress)}%`;
+                    }, 
+                    (error) => {
+                        // ストレージのアップロードエラーを強制キャッチ
+                        console.error("ストレージエラー:", error);
+                        alert("動画のアップロードに失敗しました。\nエラー: " + error.message);
+                        loadingMsg.style.display = 'none';
+                        postBtn.disabled = false;
+                    }, 
+                    async () => {
+                        // アップロード完了後、データベースに保存
+                        try {
+                            loadingMsg.innerText = 'データベースに保存中...';
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-                    titleInput.value = '';
-                    fileInput.value = '';
+                            await addDoc(collection(db, "videos"), {
+                                title: titleText,
+                                url: downloadURL,
+                                videoId: randomVideoId,
+                                createdAt: serverTimestamp()
+                            });
 
-                } catch (error) {
-                    console.error("エラー:", error);
-                    alert("アップロード失敗: " + error.message);
-                } finally {
-                    loadingMsg.style.display = 'none';
-                    postBtn.disabled = false;
-                }
+                            // 成功したらリセット
+                            titleInput.value = '';
+                            fileInput.value = '';
+                            loadingMsg.style.display = 'none';
+                            postBtn.disabled = false;
+                            
+                        } catch (dbError) {
+                            // データベース保存時のエラーを強制キャッチ
+                            console.error("データベースエラー:", dbError);
+                            alert("データベースの保存に失敗しました。\nエラー: " + dbError.message);
+                            loadingMsg.style.display = 'none';
+                            postBtn.disabled = false;
+                        }
+                    }
+                );
             });
         }
     </script>
