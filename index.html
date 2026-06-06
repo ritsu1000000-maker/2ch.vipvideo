@@ -3,115 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>簡易動画共有アプリ</title>
+    <title>クラウド動画共有アプリ</title>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .upload-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #0056b3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #004494;
-        }
-        .video-card {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        video {
-            width: 100%;
-            border-radius: 4px;
-            background-color: #000;
-        }
-        .video-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0 5px 0;
-        }
+        body { font-family: sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .upload-section { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        input, button { padding: 10px; font-size: 16px; }
+        button { background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #004494; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .video-card { background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: left; }
+        video { width: 100%; border-radius: 4px; background-color: #000; }
+        .video-title { font-size: 18px; font-weight: bold; margin: 10px 0 5px 0; }
+        #loading { display: none; color: #d9534f; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>マイ動画アプリ</h1>
+        <h1>クラウド動画共有アプリ</h1>
 
         <div class="upload-section">
+            <div id="loading">動画をアップロード中です...（画面を閉じないでください）</div>
             <input type="text" id="video-title" placeholder="動画のタイトルを入力">
             <input type="file" id="video-file" accept="video/mp4,video/x-m4v,video/*">
-            <button onclick="postVideo()">投稿する</button>
+            <button id="post-btn">投稿する</button>
         </div>
 
         <div id="video-feed">
             </div>
     </div>
 
-    <script>
-        function postVideo() {
-            // 1. 入力されたタイトルとファイルを取得
+    <script type="module">
+        // Firebaseの基本機能
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        
+        // ストレージ機能（動画ファイルの保存）
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
+        
+        // データベース機能（タイトルとURLの保存・読み込み）
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        // あなたのFirebase設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyBCQArL0Q1wDveRywCpet5Nor3PuRYt7fM",
+            authDomain: "sabopennet.firebaseapp.com",
+            projectId: "sabopennet",
+            storageBucket: "sabopennet.firebasestorage.app",
+            messagingSenderId: "284308308452",
+            appId: "1:284308308452:web:e36dd991e55a0e60e4c7f1",
+            measurementId: "G-K17XRK5KRN"
+        };
+
+        // Firebaseの初期化
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+
+        // HTML要素の取得
+        const postBtn = document.getElementById('post-btn');
+        const videoFeed = document.getElementById('video-feed');
+        const loadingMsg = document.getElementById('loading');
+
+        // --- 1. データベースから動画を読み込んで表示する処理（リアルタイム） ---
+        const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            videoFeed.innerHTML = ''; // 一旦画面をクリア
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const videoCard = document.createElement('div');
+                videoCard.className = 'video-card';
+                videoCard.innerHTML = `
+                    <video src="${data.url}" controls preload="metadata"></video>
+                    <div class="video-title">${data.title}</div>
+                `;
+                videoFeed.appendChild(videoCard);
+            });
+        });
+
+        // --- 2. 動画をアップロードする処理 ---
+        postBtn.addEventListener('click', async () => {
             const titleInput = document.getElementById('video-title');
             const fileInput = document.getElementById('video-file');
             const file = fileInput.files[0];
 
-            // 2. 入力チェック（ファイルがない場合は警告）
             if (!file) {
                 alert('動画ファイルを選択してください！');
                 return;
             }
 
-            // タイトルが空の場合は「無題」にする
             const titleText = titleInput.value.trim() || '無題';
 
-            // 3. ブラウザ内で動画を再生するための仮のURLを作成
-            const videoURL = URL.createObjectURL(file);
+            // アップロード中のUI制御
+            loadingMsg.style.display = 'block';
+            postBtn.disabled = true;
 
-            // 4. 新しい動画カードのHTMLを作成
-            const videoFeed = document.getElementById('video-feed');
-            const videoCard = document.createElement('div');
-            videoCard.className = 'video-card';
-            
-            // HTMLを組み立てて挿入
-            videoCard.innerHTML = `
-                <video src="${videoURL}" controls></video>
-                <div class="video-title">${titleText}</div>
-            `;
+            try {
+                // [ステップA] Storageに動画ファイルをアップロード
+                // ファイル名が被らないように、現在時刻(Date.now())をファイル名に追加
+                const storageRef = ref(storage, 'videos/' + Date.now() + '_' + file.name);
+                await uploadBytes(storageRef, file);
+                
+                // [ステップB] アップロードした動画の「公開URL」を取得
+                const downloadURL = await getDownloadURL(storageRef);
 
-            // 5. 画面の先頭に動画を追加
-            videoFeed.prepend(videoCard);
+                // [ステップC] データベース(Firestore)に、タイトルとURLを保存
+                await addDoc(collection(db, "videos"), {
+                    title: titleText,
+                    url: downloadURL,
+                    createdAt: serverTimestamp() // 投稿時間を記録
+                });
 
-            // 6. 入力欄をリセット
-            titleInput.value = '';
-            fileInput.value = '';
-        }
+                // 入力欄をリセット
+                titleInput.value = '';
+                fileInput.value = '';
+
+            } catch (error) {
+                console.error("エラーが発生しました:", error);
+                alert("アップロードに失敗しました。Firebaseのセキュリティルールを確認してください。\nエラー: " + error.message);
+            } finally {
+                // UIを元に戻す
+                loadingMsg.style.display = 'none';
+                postBtn.disabled = false;
+            }
+        });
     </script>
 
 </body>
